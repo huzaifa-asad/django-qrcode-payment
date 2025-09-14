@@ -96,4 +96,4 @@ black .
 
 ## License
 
-MIT
+MIT © 2025 huzaifa-asad. See LICENSE for details.
