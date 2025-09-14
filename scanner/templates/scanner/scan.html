@@ -1,0 +1,103 @@
+{% extends "core/base.html" %}
+{% block title %}Scan QR{% endblock title %}
+{% block content %}
+
+<section class="grid two">
+    <div class="card">
+        <h1 class="card-title">Scan QR Code</h1>
+        <form action="{% url 'scan_qr' %}" method="post" enctype="multipart/form-data" class="form" id="scan-form">
+            {% csrf_token %}
+                    <label class="field" id="scan-mobile-field">
+                        <span class="label">Mobile Number</span>
+                        <input type="text" name="mobile_number" id="scan-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\\d{10}" required>
+                        <div class="error-text" id="scan-mobile-error" style="display:none"></div>
+                    </label>
+
+            <div class="field">
+                <span class="label">QR Image</span>
+                <div id="dropzone" class="dropzone" tabindex="0">
+                    <div>
+                        <div class="muted">Drag & drop image here</div>
+                        <small class="hint">or click to select a PNG/JPG</small>
+                    </div>
+                </div>
+                <input type="file" name="qr_image" accept="image/*" id="qr-input" required style="display:none">
+                <div id="preview" class="preview" style="display:none">
+                    <img id="preview-img" alt="QR preview"/>
+                    <small class="hint">Preview of the uploaded image</small>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn primary" id="scan-btn">
+                    <span>Scan</span>
+                    <span class="spinner" style="display:none" id="scan-spinner"></span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">Result</h2>
+        {% if result %}
+            <div class="result success">{{ result }}</div>
+        {% else %}
+            <p class="muted">Scan a QR to see the result here.</p>
+        {% endif %}
+    </div>
+</section>
+
+{% block extra_body %}
+<script>
+    (function(){
+        const dz = document.getElementById('dropzone');
+        const input = document.getElementById('qr-input');
+        const preview = document.getElementById('preview');
+        const img = document.getElementById('preview-img');
+        const btn = document.getElementById('scan-btn');
+        const spinner = document.getElementById('scan-spinner');
+        if(!dz || !input) return;
+        function showPreview(file){
+            if(!file || !file.type.startsWith('image/')){ return; }
+            const reader = new FileReader();
+            reader.onload = (e)=>{ img.src = e.target.result; preview.style.display='grid'; };
+            reader.readAsDataURL(file);
+        }
+        dz.addEventListener('click', ()=> input.click());
+        dz.addEventListener('dragover', (e)=>{ e.preventDefault(); dz.classList.add('dragover'); });
+        dz.addEventListener('dragleave', ()=> dz.classList.remove('dragover'));
+        dz.addEventListener('drop', (e)=>{ e.preventDefault(); dz.classList.remove('dragover'); const file = e.dataTransfer.files[0]; if(file){ input.files = e.dataTransfer.files; showPreview(file); }});
+        input.addEventListener('change', ()=>{ const file = input.files[0]; showPreview(file); });
+
+            const form = document.getElementById('scan-form');
+            const mField = document.getElementById('scan-mobile-field');
+            const mInput = document.getElementById('scan-mobile');
+            const mError = document.getElementById('scan-mobile-error');
+            function validate(){
+                const val = (mInput.value || '').trim();
+                const ok = /^\d{10}$/.test(val);
+                if(!ok){
+                    mField.classList.add('error');
+                    mError.textContent = 'Please enter a valid 10-digit mobile number.';
+                    mError.style.display = 'block';
+                } else {
+                    mField.classList.remove('error');
+                    mError.textContent = '';
+                    mError.style.display = 'none';
+                }
+                return ok;
+            }
+            mInput && mInput.addEventListener('input', validate);
+            form.addEventListener('submit', (e)=>{
+                if(!validate()){
+                    e.preventDefault();
+                    try{ window.showToast && window.showToast('Invalid mobile number', 'error'); }catch(_){}
+                    return;
+                }
+                spinner.style.display='inline-block'; btn.setAttribute('disabled','disabled'); setTimeout(()=>{ try{ window.showToast && window.showToast('Scanning...'); }catch(e){} }, 50);
+            });
+    })();
+</script>
+{% endblock extra_body %}
+
+{% endblock content %}

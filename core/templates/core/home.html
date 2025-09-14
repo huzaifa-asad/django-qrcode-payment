@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% block title %}Home{% endblock title %}
+{% block content %}
+
+<section class="hero">
+	<h1 class="hero-title">QR Payments made simple</h1>
+	<p class="hero-subtitle">Generate and scan QR codes for quick, secure payments at GS Petrol Pump.</p>
+	<div class="actions">
+		<a href="{% url 'generate_qr' %}" class="btn primary">Generate QR</a>
+		<a href="{% url 'scan_qr' %}" class="btn">Scan QR</a>
+	</div>
+	<div class="hero-art" aria-hidden="true"></div>
+	</section>
+
+<section class="grid two">
+	<div class="card">
+		<h2 class="card-title">Create a QR</h2>
+		<p class="muted">Turn text or payment info into a downloadable QR code.</p>
+		<a href="{% url 'generate_qr' %}" class="btn link">Start generating →</a>
+	</div>
+	<div class="card">
+		<h2 class="card-title">Scan a QR</h2>
+		<p class="muted">Upload a QR image and get the decoded content instantly.</p>
+		<a href="{% url 'scan_qr' %}" class="btn link">Start scanning →</a>
+	</div>
+</section>
+
+{% endblock content %}

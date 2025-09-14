@@ -1,0 +1,95 @@
+{% extends "core/base.html" %}
+{% block title %}Generate QR{% endblock title %}
+{% block content %}
+
+<section class="grid two">
+        <div class="card">
+        <h1 class="card-title">Generate QR Code</h1>
+            <form action="{% url 'generate_qr' %}" method="post" class="form" id="gen-form">
+            {% csrf_token %}
+                    <label class="field" id="gen-mobile-field">
+                        <span class="label">Mobile Number</span>
+                        <input type="text" name="mobile_number" id="gen-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\\d{10}" required>
+                        <small class="hint">Exactly 10 digits</small>
+                        <div class="error-text" id="gen-mobile-error" style="display:none"></div>
+                    </label>
+
+            <label class="field">
+                <span class="label">QR Text</span>
+                <input type="text" name="qr_data" placeholder="Enter text to generate QR code" required>
+            </label>
+
+                    <div class="actions">
+                        <button type="submit" class="btn primary" id="gen-btn">
+                            <span>Generate</span>
+                            <span class="spinner" style="display:none" id="gen-spinner"></span>
+                        </button>
+                    </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 class="card-title">Preview</h2>
+        <div class="qr-preview">
+            {% if qr_image_url %}
+                        <img src="{{ qr_image_url }}" alt="Generated QR Code" class="qr-image">
+                        <div class="actions">
+                            <a href="{{ qr_image_url }}" download class="btn">Download QR</a>
+                            <button class="btn" type="button" id="copy-url" data-url="{{ qr_image_url }}">Copy URL</button>
+                            <a href="{{ qr_image_url }}" target="_blank" rel="noopener" class="btn">Open</a>
+                        </div>
+            {% else %}
+                <p class="muted">Your QR will appear here after generation.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+        {% block extra_body %}
+        <script>
+            (function(){
+                const form = document.getElementById('gen-form');
+                const btn = document.getElementById('gen-btn');
+                const spinner = document.getElementById('gen-spinner');
+                const field = document.getElementById('gen-mobile-field');
+                const input = document.getElementById('gen-mobile');
+                const error = document.getElementById('gen-mobile-error');
+                if(form && btn && spinner){
+                    function validate(){
+                        const val = (input.value || '').trim();
+                        const ok = /^\d{10}$/.test(val);
+                        if(!ok){
+                            field.classList.add('error');
+                            error.textContent = 'Please enter a valid 10-digit mobile number.';
+                            error.style.display = 'block';
+                        } else {
+                            field.classList.remove('error');
+                            error.textContent = '';
+                            error.style.display = 'none';
+                        }
+                        return ok;
+                    }
+                    input && input.addEventListener('input', validate);
+                    form.addEventListener('submit', (e)=>{
+                        if(!validate()){
+                            e.preventDefault();
+                            try{ window.showToast && window.showToast('Invalid mobile number', 'error'); }catch(_){}
+                            return;
+                        }
+                        spinner.style.display='inline-block'; btn.setAttribute('disabled','disabled'); setTimeout(()=>{ try{ window.showToast && window.showToast('Generating...'); }catch(e){} }, 50);
+                    });
+                }
+                const copyBtn = document.getElementById('copy-url');
+                if(copyBtn){
+                    copyBtn.addEventListener('click', async ()=>{
+                        try {
+                            await navigator.clipboard.writeText(copyBtn.dataset.url);
+                            window.showToast && window.showToast('QR URL copied', 'success');
+                        } catch(e){ window.showToast && window.showToast('Copy failed', 'error'); }
+                    });
+                }
+            })();
+            </script>
+        {% endblock extra_body %}
+
+{% endblock content %}

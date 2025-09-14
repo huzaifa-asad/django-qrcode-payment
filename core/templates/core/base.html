@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <!-- Early theme setter to avoid flash -->
+        <script>
+            (function(){
+                try {
+                    var root = document.documentElement;
+                    var mm = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+                    var storedMode = localStorage.getItem('themeMode');
+                    // Back-compat: previous 'theme' storage
+                    if(!storedMode){
+                        var old = localStorage.getItem('theme');
+                        if(old === 'light' || old === 'dark') storedMode = old;
+                    }
+                    function resolvedTheme(mode){
+                        if(mode === 'light' || mode === 'dark') return mode;
+                        return (mm && mm.matches) ? 'dark' : 'light';
+                    }
+                    var mode = storedMode || 'system';
+                    root.dataset.mode = mode;
+                    root.dataset.theme = resolvedTheme(mode);
+                    // Listen to system changes if in system mode
+                    if(mm && typeof mm.addEventListener === 'function'){
+                        mm.addEventListener('change', function(){
+                            if(root.dataset.mode === 'system'){
+                                root.dataset.theme = resolvedTheme('system');
+                            }
+                        });
+                    }
+                } catch(e) {}
+            })();
+        </script>
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}?v=2025-09-14">
+    <title>{% block title %}{% endblock title %} • GS Petrol Pump</title>
+    {% block extra_head %}{% endblock extra_head %}
+    <script>
+    // Minimal mobile nav toggle + theme toggle/mode + active nav
+        document.addEventListener('DOMContentLoaded', function(){
+            const btn = document.getElementById('nav-toggle');
+            const menu = document.getElementById('nav-menu');
+            if(btn && menu){
+                btn.addEventListener('click', ()=> menu.classList.toggle('open'));
+            }
+
+            // Active link highlighting (normalize trailing slash)
+            const path = location.pathname.replace(/\/$/, '');
+            document.querySelectorAll('#nav-menu .nav-link').forEach(a => {
+                const href = a.getAttribute('href').replace(/\/$/, '');
+                if (href === path) a.classList.add('active');
+            });
+
+                        // Theme toggle + 3-way mode (system/light/dark)
+                        const root = document.documentElement;
+                        const themeBtn = document.getElementById('theme-toggle');
+                        const themeMode = document.getElementById('theme-mode');
+                        const mm = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+
+                        function resolveTheme(mode){
+                            return (mode === 'light' || mode === 'dark') ? mode : (mm && mm.matches ? 'dark' : 'light');
+                        }
+                        function applyMode(mode){
+                            root.dataset.mode = mode;
+                            root.dataset.theme = resolveTheme(mode);
+                            localStorage.setItem('themeMode', mode);
+                            updateThemeUI();
+                        }
+                        function updateThemeUI(){
+                            const dark = root.dataset.theme === 'dark';
+                            if(themeBtn){
+                                themeBtn.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+                                themeBtn.setAttribute('aria-pressed', String(dark));
+                            }
+                            if(themeMode){
+                                themeMode.value = root.dataset.mode || 'system';
+                            }
+                        }
+                        if (themeMode){
+                            themeMode.addEventListener('change', (e)=>{
+                                applyMode(e.target.value);
+                                try { window.showToast && window.showToast(`Theme: ${e.target.value}`, 'info'); } catch(e) {}
+                            });
+                        }
+                        if (themeBtn){
+                            themeBtn.addEventListener('click', ()=>{
+                                const mode = root.dataset.mode || 'system';
+                                let next;
+                                if (mode === 'system'){
+                                    // Toggle to the opposite explicit theme
+                                    next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+                                } else {
+                                    next = (mode === 'dark') ? 'light' : 'dark';
+                                }
+                                applyMode(next);
+                                try { window.showToast && window.showToast(`Theme: ${next}`, 'info'); } catch(e) {}
+                            });
+                        }
+                        // Keep theme updated if in system mode
+                        if(mm && typeof mm.addEventListener === 'function'){
+                            mm.addEventListener('change', ()=>{
+                                if(root.dataset.mode === 'system'){
+                                    root.dataset.theme = resolveTheme('system');
+                                    updateThemeUI();
+                                }
+                            });
+                        }
+                        updateThemeUI();
+
+            // Toast helper available globally
+            window.showToast = function(msg, type='info'){
+                const area = document.getElementById('toasts');
+                if(!area) return;
+                const el = document.createElement('div');
+                el.className = `toast ${type}`;
+                el.textContent = msg;
+                area.appendChild(el);
+                setTimeout(()=> el.classList.add('show'));
+                setTimeout(()=> { el.classList.remove('show'); setTimeout(()=> el.remove(), 300); }, 3200);
+            }
+        });
+    </script>
+    <meta name="color-scheme" content="light dark">
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="{% url 'home' %}" class="brand">
+                <span class="brand-text">GS Petrol Pump</span>
+            </a>
+                                                                        <div class="nav-actions">
+                                                        <button id="theme-toggle" class="nav-icon" aria-label="Toggle theme" title="Toggle theme" aria-pressed="false">
+                                                            <!-- Sun icon -->
+                                                            <svg class="icon icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                                <circle cx="12" cy="12" r="4"/>
+                                                                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                                                            </svg>
+                                                            <!-- Moon icon -->
+                                                            <svg class="icon icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                                            </svg>
+                                                        </button>
+                                                                                <select id="theme-mode" class="theme-select" aria-label="Theme mode">
+                                                                                    <option value="system">System</option>
+                                                                                    <option value="light">Light</option>
+                                                                                    <option value="dark">Dark</option>
+                                                                                </select>
+                                                        <button id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation">☰</button>
+                                                </div>
+            <nav id="nav-menu" class="nav-links">
+                <a href="{% url 'home' %}" class="nav-link">Home</a>
+                <a href="{% url 'generate_qr' %}" class="nav-link">Generate</a>
+                <a href="{% url 'scan_qr' %}" class="nav-link">Scan</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page">
+        {% block content %}{% endblock content %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© <span id="year"></span> GS Petrol Pump • Simple QR payments</p>
+        </div>
+        <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+    </footer>
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+    {% block extra_body %}{% endblock extra_body %}
+  </body>
+  </html>
