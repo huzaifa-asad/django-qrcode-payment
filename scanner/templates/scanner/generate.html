@@ -7,11 +7,11 @@
         <h1 class="card-title">Generate QR Code</h1>
             <form action="{% url 'generate_qr' %}" method="post" class="form" id="gen-form">
             {% csrf_token %}
-                    <label class="field" id="gen-mobile-field">
+                    <label class="field{% if error %} error{% endif %}" id="gen-mobile-field" data-server-error="{{ error|default:'' }}">
                         <span class="label">Mobile Number</span>
-                        <input type="text" name="mobile_number" id="gen-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\\d{10}" required>
+                        <input type="text" name="mobile_number" id="gen-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\d{10}" maxlength="10" required>
                         <small class="hint">Exactly 10 digits</small>
-                        <div class="error-text" id="gen-mobile-error" style="display:none"></div>
+                        <div class="error-text" id="gen-mobile-error" style="{% if error %}display:block{% else %}display:none{% endif %}">{{ error }}</div>
                     </label>
 
             <label class="field">
@@ -69,7 +69,14 @@
                         }
                         return ok;
                     }
-                    input && input.addEventListener('input', validate);
+                    // Keep only digits and validate live
+                    input && input.addEventListener('input', ()=>{
+                        input.value = (input.value || '').replace(/\D/g,'').slice(0,10);
+                        validate();
+                    });
+                    // If server returned error, surface it as a toast
+                    const serverErr = field.dataset.serverError;
+                    if(serverErr){ try{ window.showToast && window.showToast(serverErr, 'error'); }catch(_){} }
                     form.addEventListener('submit', (e)=>{
                         if(!validate()){
                             e.preventDefault();

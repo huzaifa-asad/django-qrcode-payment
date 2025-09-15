@@ -7,10 +7,10 @@
         <h1 class="card-title">Scan QR Code</h1>
         <form action="{% url 'scan_qr' %}" method="post" enctype="multipart/form-data" class="form" id="scan-form">
             {% csrf_token %}
-                    <label class="field" id="scan-mobile-field">
+                    <label class="field{% if error %} error{% endif %}" id="scan-mobile-field" data-server-error="{{ error|default:'' }}">
                         <span class="label">Mobile Number</span>
-                        <input type="text" name="mobile_number" id="scan-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\\d{10}" required>
-                        <div class="error-text" id="scan-mobile-error" style="display:none"></div>
+                        <input type="text" name="mobile_number" id="scan-mobile" placeholder="Enter 10-digit mobile number" inputmode="numeric" pattern="\d{10}" maxlength="10" required>
+                        <div class="error-text" id="scan-mobile-error" style="{% if error %}display:block{% else %}display:none{% endif %}">{{ error }}</div>
                     </label>
 
             <div class="field">
@@ -87,7 +87,8 @@
                 }
                 return ok;
             }
-            mInput && mInput.addEventListener('input', validate);
+            mInput && mInput.addEventListener('input', ()=>{ mInput.value = (mInput.value||'').replace(/\D/g,'').slice(0,10); validate(); });
+            const serverErr = mField && mField.dataset.serverError; if(serverErr){ try{ window.showToast && window.showToast(serverErr, 'error'); }catch(_){} }
             form.addEventListener('submit', (e)=>{
                 if(!validate()){
                     e.preventDefault();
